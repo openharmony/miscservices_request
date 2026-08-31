@@ -16,6 +16,7 @@
 #include <iomanip>
 #include "download_service_manager.h"
 #include "dump_task_info.h"
+#include "parse_dump_task_id.h"
 
 namespace OHOS::Request::Download {
 bool DumpTaskInfo::Dump(int fd, const std::vector<std::string> &args)
@@ -29,7 +30,12 @@ bool DumpTaskInfo::Dump(int fd, const std::vector<std::string> &args)
     if (argsNum == 0) {
         DumpAllTask(fd);
     } else {
-        DumpTaskDetailInfo(fd, std::stoul(args[0]));
+        uint32_t taskId = 0;
+        if (!ParseDumpTaskId(args[0], taskId)) {
+            dprintf(fd, "invalid task id\n");
+            return false;
+        }
+        DumpTaskDetailInfo(fd, taskId);
     }
 
     return true;
