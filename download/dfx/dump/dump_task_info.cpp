@@ -13,7 +13,10 @@
  * limitations under the License.
  */
 
+#include <cerrno>
+#include <cstdlib>
 #include <iomanip>
+#include <limits>
 #include "download_service_manager.h"
 #include "dump_task_info.h"
 
@@ -29,7 +32,15 @@ bool DumpTaskInfo::Dump(int fd, const std::vector<std::string> &args)
     if (argsNum == 0) {
         DumpAllTask(fd);
     } else {
-        DumpTaskDetailInfo(fd, std::stoul(args[0]));
+        errno = 0;
+        char *end = nullptr;
+        unsigned long taskId = std::strtoul(args[0].c_str(), &end, 10);
+        if (end == args[0].c_str() || *end != '\0' || errno == ERANGE ||
+            taskId > std::numeric_limits<uint32_t>::max()) {
+            dprintf(fd, "invalid task id %s\n", args[0].c_str());
+            return false;
+        }
+        DumpTaskDetailInfo(fd, static_cast<uint32_t>(taskId));
     }
 
     return true;
